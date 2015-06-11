@@ -10,7 +10,7 @@ Usage
 
 Follow Slingshot's instructions on setting up a directive, then define the following autoform rules in your schema
 
-'''
+```
 picture_url:
     type: String,
     optional:true,
@@ -20,6 +20,6 @@ picture_url:
         slingshotdirective: 'myDefinedDirective'
         }
     }
-'''
+```
 
 The resulting field will contain the URL of the uploaded file
