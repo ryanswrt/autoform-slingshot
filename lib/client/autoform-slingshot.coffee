@@ -62,18 +62,17 @@ Template.afSlingshot.destroyed = () ->
 Template.afSlingshot.events
   "change .file-upload": (e, t) ->
     files = e.target.files
-    console.log(t.data)
     uploader = new Slingshot.Upload(t.data.atts.slingshotdirective)
-    uploader.send event.target.files[0], (err, downloadUrl)->
+    files = event.target.files
+    if t.data.atts.onBeforeUpload
+      files = t.data.atts.onBeforeUpload(files)
+    uploader.send files[0], (err, downloadUrl)->
       if err
         console.log err
       else
         name = $(e.target).attr('file-input')
-        # console.log $(e.target)
-        # console.log fileObj
         $('input[name="' + name + '"]').val(downloadUrl)
         Session.set 'fileUploadSelected[' + name + ']', files[0].name
-        # console.log fileObj
         refreshFileInput name
   'click .file-upload-clear': (e, t)->
     name = $(e.currentTarget).attr('file-input')
@@ -95,7 +94,6 @@ Template.afSlingshot.helpers
     atts
   fileUpload: ->
     af = Template.parentData(1)._af
-    # Template.parentData(4).value
 
     name = @atts.name
     uploader = new Slingshot.Upload(@)
@@ -112,7 +110,7 @@ Template.afSlingshot.helpers
       file = parentData
     else
       return null
-    console.log(file)
+
     if file != '' && file
       if file.length == 17
           # No subscription
