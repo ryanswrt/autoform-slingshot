@@ -18,6 +18,7 @@ picture_url:
       afFieldInput:{
         type: 'slingshotFileUpload',
         slingshotdirective: 'myDefinedDirective'
+        onBeforeUpload: function(files){return files} // Synchronous transform for files from the upload field before upload.
         }
     }
 ```
