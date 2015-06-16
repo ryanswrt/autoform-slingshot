@@ -8,7 +8,7 @@ Pretty much a clone of [yogiben:autoform-file](https://atmospherejs.com/yogiben/
 Usage
 =====
 
-Follow Slingshot's instructions on setting up a directive, then define the following autoform rules in your schema
+Follow Slingshot's instructions on setting up a directive, then define the following autoform rules in your schema.  If you want to resize before upload the following is an example using `thinksoftware:image-resize-client`.
 
 ```
 picture_url:
@@ -18,7 +18,18 @@ picture_url:
       afFieldInput:{
         type: 'slingshotFileUpload',
         slingshotdirective: 'myDefinedDirective'
-        onBeforeUpload: function(files){return files} // Synchronous transform for files from the upload field before upload.
+        onBeforeUpload: function(files, callback){
+            _.each( files, function(file){
+              Resizer.resize(file, {width: 1020, height: 1020, cropSquare: true}, function(err, file) {
+                if( err ){
+                  console.error( err );
+                  callback( file );
+                }else{
+                  callback( file );
+                }
+              });
+            });
+          }
         }
     }
 ```
