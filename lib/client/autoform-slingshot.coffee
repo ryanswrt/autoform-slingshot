@@ -62,18 +62,28 @@ Template.afSlingshot.destroyed = () ->
 Template.afSlingshot.events
   "change .file-upload": (e, t) ->
     files = e.target.files
+    if typeof files is "undefined" || (files.length is 0) then return
+
     uploader = new Slingshot.Upload(t.data.atts.slingshotdirective)
-    files = event.target.files
+
+    uploadCallback = (file) ->
+      uploader.send file, (err, downloadUrl)->
+        if err
+          console.log err
+        else
+          name = $(e.target).attr('file-input')
+          $('input[name="' + name + '"]').val(downloadUrl)
+          Session.set 'fileUploadSelected[' + name + ']', file.name
+          refreshFileInput name
+
     if t.data.atts.onBeforeUpload
-      files = t.data.atts.onBeforeUpload(files)
-    uploader.send files[0], (err, downloadUrl)->
-      if err
-        console.log err
-      else
-        name = $(e.target).attr('file-input')
-        $('input[name="' + name + '"]').val(downloadUrl)
-        Session.set 'fileUploadSelected[' + name + ']', files[0].name
-        refreshFileInput name
+      t.data.atts.onBeforeUpload( files, uploadCallback )
+    else
+      _.each( files, (file)->
+        uploadCallback file
+      )
+
+
   'click .file-upload-clear': (e, t)->
     name = $(e.currentTarget).attr('file-input')
     $('input[name="' + name + '"]').val('')
@@ -91,6 +101,7 @@ Template.afSlingshot.helpers
   fileUploadAtts: ->
     atts = _.clone(this.atts)
     delete atts.collection
+    delete atts.onBeforeUpload
     atts
   fileUpload: ->
     af = Template.parentData(1)._af
