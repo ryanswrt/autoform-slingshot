@@ -2,13 +2,26 @@ SlingshotAutoformFileCache = new Meteor.Collection(null);
 
 AutoForm.addInputType 'slingshotFileUpload',
   template: 'afSlingshot'
+  valueIn: (value) ->
+    t = Template.instance()
+    if t.data and typeof value == 'string' and value.length > 0
+      SlingshotAutoformFileCache.upsert {field: t.data.name}, {
+        field: t.data.name
+        src: value
+      }
+    else
+      # debugger
+      console.log(value)
+    value
   valueOut: ->
     field = $(@context).data('schema-key')
     images = SlingshotAutoformFileCache.find({field: field}).fetch()
     images
   valueConverters:
     string: (images)->
-      images[0].src
+      if typeof images == "object" or typeof images == "array"
+        if typeof images[0] == "object"
+          images[0].src
 
     stringArray: (images)->
       imgs = _.map( images, (image)-> image.src )
@@ -123,8 +136,6 @@ Template.afSlingshot.events events
 Template.afSlingshot_ionic.events events
 
 helpers =
-  # collection: ->
-  #   #getCollection(@)
   label: ->
     @atts.label or 'Choose file'
   removeLabel: ->
@@ -144,7 +155,7 @@ helpers =
     file = SlingshotAutoformFileCache.findOne(select)
     if file
       data: file
-      template: getTemplate file.filename, t.view
+      template: getTemplate file.filename or file.src, t.view
 
 Template.afSlingshot.helpers helpers
 Template.afSlingshot_ionic.helpers helpers
@@ -174,10 +185,16 @@ Template.fileThumbIcon.helpers
 
 Template.fileThumbIcon_ionic.helpers
   filename: ->
-    filename = @filename
-    if filename.length > 25
-      filename = filename.slice(0, 25) + '...'
-    filename
+    if @filename
+      filename = @filename
+      if filename.length > 25
+        filename = filename.slice(0, 25) + '...'
+      filename
+    else if @src
+      filename = @src.replace(/^.*[\\\/]/, '');
+      if filename.length > 25
+        filename = filename.slice(0, 25) + '...'
+      filename
   icon: ->
     if @filename
       file = @filename.toLowerCase()
