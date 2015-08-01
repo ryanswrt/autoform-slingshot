@@ -5,19 +5,14 @@ AutoForm.addInputType 'slingshotFileUpload',
   valueOut: ->
     field = $(@context).data('schema-key')
     images = SlingshotAutoformFileCache.find({field: field}).fetch()
-    console.log(images)
     images
   valueConverters:
     string: (images)->
-      images[0].downloadUrl
+      images[0].src
 
     stringArray: (images)->
-      console.log(images)
-      imgs = _.map(images, (image)-> image.downloadUrl )
+      imgs = _.map( images, (image)-> image.src )
       imgs
-
-    objectArray: (images)->
-      images
 
 # clearFilesFromCache = ->
 #   console.log(£)
@@ -40,21 +35,15 @@ getTemplate = (filename, parentView) ->
 
 AutoForm.addHooks null,
   onSuccess: ->
-    console.log('success, clear cache')
-    # clearFilesFromCache()
+    clearFilesFromCache()
 
 destroyed = () ->
   name = @data.name
-  # Session.set 'fileUpload['+name+']', null
 
 Template.afSlingshot.destroyed = destroyed
 Template.afSlingshot_ionic.destroyed = destroyed
 
 uploadWith = (directive, files, name, key) ->
-  directiveName
-  uploader
-  onBeforeUpload
-
   if typeof directive == 'string'
     directiveName = directive
   else if typeof directive == 'object'
@@ -118,6 +107,10 @@ events =
 
     # If single directive upload.
     if typeof directives == 'string'
+      uploadWith directives, files, name
+
+    # If singe directive as object.
+    else if typeof directives == 'object' and 'directive' of directives
       uploadWith directives, files, name
 
     # If multiple directive upload with keys.
