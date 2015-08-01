@@ -2,21 +2,27 @@ SlingshotAutoformFileCache = new Meteor.Collection(null);
 
 AutoForm.addInputType 'slingshotFileUpload',
   template: 'afSlingshot'
-  valueIn: (value) ->
+  valueIn: (images) ->
     t = Template.instance()
-    if t.data and typeof value == 'string' and value.length > 0
+    if t.data and typeof images == 'string' and images.length > 0
       SlingshotAutoformFileCache.upsert {field: t.data.name}, {
         field: t.data.name
-        src: value
+        src: images
       }
     else
+      _.each images, (image) ->
+        SlingshotAutoformFileCache.upsert {field: t.data.name, directive: image.directive}, _.extend(image,
+         field: t.data.name
+        )
       # debugger
-      console.log(value)
-    value
+      console.log(images)
+    images
+
   valueOut: ->
     field = $(@context).data('schema-key')
     images = SlingshotAutoformFileCache.find({field: field}).fetch()
     images
+
   valueConverters:
     string: (images)->
       if typeof images == "object" or typeof images == "array"

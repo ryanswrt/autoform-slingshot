@@ -113,14 +113,10 @@ picture: {
     }
   }
 },
-// NOTICE! This is optional.
-// But without it you don't store any values if using type [Object].
+// NOTICE! These are required.
 'picture.$.key': { type: String },
-// Optional, but without you don't save the filename.
 'picture.$.filename': { type: String },
-// Optional, but without you don't save the src path.
 'picture.$.src': { type: String },
-// Optional, but without you don't save the directive.
 'picture.$.directive': { type: String }
 ```
 
