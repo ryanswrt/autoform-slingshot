@@ -70,7 +70,7 @@ If you want multiple sizes for a uploaded picture and **you want the client to d
 ```js
 picture: {
   // This package can also take type: [String],
-  // but it will only save the src in the order you specified in the directives.
+  // but in that case it will only save the src in the order you specified in the directives.
   type: [Object],
   label: 'Select Picture', // (optional, defaults to "Select")
   optional: true, // (optional)
@@ -114,7 +114,7 @@ picture: {
   }
 },
 // NOTICE! This is optional.
-// But without you don't store any values if using type [Object].
+// But without it you don't store any values if using type [Object].
 'picture.$.key': { type: String },
 // Optional, but without you don't save the filename.
 'picture.$.filename': { type: String },
