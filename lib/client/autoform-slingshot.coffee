@@ -10,23 +10,46 @@ AutoForm.addInputType 'slingshotFileUpload',
         src: images
       }
     else
-      _.each images, (image) ->
-        SlingshotAutoformFileCache.upsert {field: t.data.name, directive: image.directive}, _.extend(image,
-         field: t.data.name
-        )
-      # debugger
-      console.log(images)
+      _.each images, (image, i) ->
+        if typeof image == 'string'
+          schema = AutoForm.getFormSchema()
+          if schema and schema._schema and t.view.isRendered
+            schemaKey = t.$('[data-schema-key]').data('schema-key')
+            if schemaKey
+              # Replace ".0." with ".$."
+              schemaKey = schemaKey.replace(/\.\d+\./g, '.$.')
+              directives = schema._schema[schemaKey].autoform.afFieldInput.slingshotdirective
+              if directives
+                _directives = _.map(directives, (o, k) ->
+                  if typeof o == 'string'
+                    o = {directive: o}
+                  o.key = k
+                  return o
+                  ).sort((a, b) ->
+                    -a.key.localeCompare b.key
+                  )
+                # debugger
+                SlingshotAutoformFileCache.upsert {field: t.data.name, directive: _directives[i].directive}, {
+                  field: t.data.name
+                  directive: _directives[i].directive
+                  key: _directives[i].key
+                  src: image
+                }
+        else
+          SlingshotAutoformFileCache.upsert {field: t.data.name, directive: image.directive}, _.extend(image,
+           field: t.data.name
+          )
     images
 
   valueOut: ->
     field = $(@context).data('schema-key')
-    images = SlingshotAutoformFileCache.find({field: field}).fetch()
+    images = SlingshotAutoformFileCache.find({field: field}, {order: {key: -1}}).fetch()
     images
 
   valueConverters:
     string: (images)->
-      if typeof images == "object" or typeof images == "array"
-        if typeof images[0] == "object"
+      if typeof images == 'object' or typeof images == 'array'
+        if typeof images[0] == 'object'
           images[0].src
 
     stringArray: (images)->
@@ -108,8 +131,6 @@ uploadWith = (directive, files, name, key) ->
     , (err, results) ->
       if err
         console.error err
-      else
-        console.log('all done', results)
   )
 
 events =
@@ -157,7 +178,7 @@ helpers =
       field: @atts.name
     # Allow selection of the directive for the thumbnail by key.
     if @atts.thumbnail
-      select.key = @atts.thumbnail
+      select.$or = [{directive: @atts.thumbnail}, {key: @atts.thumbnail}]
     file = SlingshotAutoformFileCache.findOne(select)
     if file
       data: file
