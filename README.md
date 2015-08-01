@@ -45,16 +45,15 @@ picture_url: {
     afFieldInput:{
       slingshotdirective: {
         directive: 'myDefinedDirective',
-        onBeforeUpload: function(files, callback) {
-          _.each( files, function(file){
-            Resizer.resize(file, {width: 1020, height: 1020, cropSquare: true}, function(err, file) {
-              if( err ){
-                console.error( err );
-                callback( file );
-              }else{
-                callback( file );
-              }
-            });
+        // onBeforeUpload is called once on each file.
+        onBeforeUpload: function(file, callback) {
+          Resizer.resize(file, {width: 1020, height: 1020, cropSquare: true}, function(err, file) {
+            if( err ){
+              console.error( err );
+              callback( file );
+            }else{
+              callback( file );
+            }
           });
         }
       }
@@ -70,7 +69,7 @@ If you want multiple sizes for a uploaded picture and **you want the client to d
 ```js
 picture: {
   // This package can also take type: [String],
-  // but in that case it will only save the src in the order you specified in the directives.
+  // but in that case it will only save the src.
   type: [Object],
   label: 'Select Picture', // (optional, defaults to "Select")
   optional: true, // (optional)
@@ -81,10 +80,10 @@ picture: {
       label: false
     },
     afFieldInput: {
-      // Specify which directive to present as thumbnail using the key.
+      // Specify which slingshotdirective to present as thumbnail when  this picture is uploaded, you can use the "key" or "directive".
       thumbnail: 'mobile',
       slingshotdirective: {
-        mobile: { // This is the key for the "mobile" version.
+        mobile: { // <-- This is the "key" for the "mobile" version.
           directive: "myMobileDirective",
           onBeforeUpload: function(file, callback) {
             // Create a mobile 640x640 size version.
@@ -96,7 +95,7 @@ picture: {
             });
           }
         },
-        large: { // This is the key for the "large" version.
+        large: { // <-- This is the "key" for the "large" version.
           directive: "myLargeDirective",
           onBeforeUpload: function(file, callback) {
             // Create a large 1500x1500 size version.
@@ -113,7 +112,7 @@ picture: {
     }
   }
 },
-// NOTICE! These are required.
+// NOTICE! These are required for type: [Object].
 'picture.$.key': { type: String },
 'picture.$.filename': { type: String },
 'picture.$.src': { type: String },
