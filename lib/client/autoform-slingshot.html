@@ -13,9 +13,6 @@
     </label>
     {{/if}}
     <!-- <div class="" style="display:none;">{{> afQuickField name=name}}</div> -->
-
-    <input type="text" class="slingshot-image"  data-slingshot-directive="{{this.atts.slingshotdirective}}" {{fileUploadAtts ..}} value="{{downloadUrl}}">
-
   </div>
 </template>
 
@@ -25,7 +22,6 @@
     {{#with fileUpload}}
     {{> Template.dynamic template=template data=data}}
     {{/with}}
-    <br/>
     <!-- <a class="button button-block button-dark file-upload-clear" file-input="{{name}}"><i class="fa fa-times"></i> {{removeLabel}}</a> -->
     {{else}}
     <label for="file-{{name}}" class="button button-block button-calm">
@@ -33,15 +29,18 @@
       <input class="hidden" id="file-{{name}}" file-input="{{name}}" type="file" accept="{{accept}}" />
     </label>
     {{/if}}
-    {{#each images}}
-    <input type="text" class="slingshot-image" data-slingshot-directive="{{this.atts.slingshotdirective}}" {{fileUploadAtts ..}} value="{{downloadUrl}}">
-    {{/each}}
   </div>
 </template>
 
 <template name="fileThumbIcon">
   <a class="btn btn-default" target="_blank" href="{{src}}">
     <i class="fa fa-{{icon}}"></i> {{filename}}
+  </a>
+</template>
+
+<template name="fileThumbIcon_ionic">
+  <a class="button button-block" target="_blank" href="{{src}}">
+    {{> ionIcon icon=icon}} {{filename}}
   </a>
 </template>
 
