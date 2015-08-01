@@ -69,7 +69,7 @@ getTemplate = (filename, parentView) ->
     filename = filename.toLowerCase()
     template = 'fileThumbIcon' + (if parentView.name.indexOf('_ionic') > -1 then '_ionic' else '')
     if filename.indexOf('.jpg') > -1 || filename.indexOf('.png') > -1 || filename.indexOf('.gif') > -1
-      template = 'fileThumbImg'
+      template = 'fileThumbImg' + (if parentView.name.indexOf('_ionic') > -1 then '_ionic' else '')
     template
 
 AutoForm.addHooks null,
@@ -243,3 +243,16 @@ Template.fileThumbIcon_ionic.helpers
       else if file.indexOf('http://') > -1 || file.indexOf('https://') > -1
         icon = 'link'
       icon
+
+Template.fileThumbImg_ionic.events(
+  'click [data-action=showActionSheet]': (event) ->
+    IonActionSheet.show(
+      buttons: []
+      destructiveText: i18n 'destructive_text'
+      cancelText: i18n 'cancel_text'
+      destructiveButtonClicked: (()->
+        SlingshotAutoformFileCache.remove({field: this.field});
+        true
+      ).bind(this)
+    )
+)
