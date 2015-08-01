@@ -14,11 +14,8 @@ AutoForm.addInputType 'slingshotFileUpload',
       imgs = _.map( images, (image)-> image.src )
       imgs
 
-# clearFilesFromCache = ->
-#   console.log(£)
-#   _.each Session.keys, (value, key, index)->
-#     if key.indexOf('fileUpload') > -1
-#       Session.set key, ''
+clearFilesFromCache = ->
+  SlingshotAutoformFileCache.remove({});
 
 getCollection = (context) ->
   if typeof context.atts.collection == 'string'
