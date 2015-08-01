@@ -1,6 +1,30 @@
-AutoForm.addInputType 'slingshotFileUpload', {
+SlingshotImages = new Meteor.Collection(null);
+
+AutoForm.addInputType 'slingshotFileUpload',
   template: 'afSlingshot'
-}
+  valueOut: ->
+		input = $('[file-input]')
+    console.log($(@context))
+    name = input.attr('file-input');
+    console.log(name, input);
+    images = SlingshotImages.find({field: name}).fetch()
+    console.log(images)
+    images
+	valueConverters:
+		string: (images)->
+			images[0].downloadUrl
+		stringArray: (images)->
+      console.log images
+
+      _.map images, (image)->
+        image.downloadUrl
+    objectArray: (images)->
+      images
+    object: (images)->
+      imgs = {}
+      for image in images
+        structure[image.key || image.directive] = image
+      imgs
 
 refreshFileInput = (name)->
   callback = ->
@@ -55,29 +79,46 @@ AutoForm.addHooks null,
   onSuccess: ->
     clearFilesFromSession()
 
-Template.afSlingshot.destroyed = () ->
+destroyed = () ->
   name = @data.name
   Session.set 'fileUpload['+name+']', null
 
-Template.afSlingshot.events
+Template.afSlingshot.destroyed = destroyed
+Template.afSlingshot_ionic.destroyed = destroyed
+
+events =
   "change .file-upload": (e, t) ->
     files = e.target.files
     if typeof files is "undefined" || (files.length is 0) then return
 
-    uploader = new Slingshot.Upload(t.data.atts.slingshotdirective)
+    directive = t.data.atts.slingshotdirective
+    uploader = new Slingshot.Upload(directive)
 
-    uploadCallback = (file) ->
+    uploadCallback = (file, slingshotdirective, key) ->
+      if slingshotdirective
+        uploader = new Slingshot.Upload(directive)
+      else
+        slingshotdirective = directive
+
       uploader.send file, (err, downloadUrl)->
         if err
           console.log err
         else
           name = $(e.target).attr('file-input')
-          $('input[name="' + name + '"]').val(downloadUrl)
+          # t.$('input[name="' + name + '"]').val(downloadUrl)
           Session.set 'fileUploadSelected[' + name + ']', file.name
+          SlingshotImages.upsert {field: name, directive: slingshotdirective}, {
+            field: name
+            key: key || '',
+            directive: slingshotdirective
+            filename: file.name
+            downloadUrl: downloadUrl
+          }
           refreshFileInput name
 
     if t.data.atts.onBeforeUpload
-      t.data.atts.onBeforeUpload( files, uploadCallback )
+      for onBeforeUpload in t.data.atts.onBeforeUpload
+        onBeforeUpload files, uploadCallback
     else
       _.each( files, (file)->
         uploadCallback file
@@ -86,20 +127,31 @@ Template.afSlingshot.events
 
   'click .file-upload-clear': (e, t)->
     name = $(e.currentTarget).attr('file-input')
-    $('input[name="' + name + '"]').val('')
+    # t.$('input[name="' + name + '"]').val('')
     Session.set 'fileUpload[' + name + ']', 'delete-file'
+    SlingshotImages.remove({field: name});
 
-Template.afSlingshot.helpers
+Template.afSlingshot.events events
+Template.afSlingshot_ionic.events events
+
+helpers =
+  images: ->
+    _.map SlingshotImages.find({field: @atts.name}).fetch(), (image, i) ->
+      downloadUrl: image.downloadUrl
+      name: image.field + '.' + i
   collection: ->
     #getCollection(@)
   label: ->
     @atts.label or 'Choose file'
   removeLabel: ->
-    @atts['remove-label'] or 'Remove'
+    @atts['removeLabel'] or 'Remove'
   accept: ->
     @atts.accept or '*'
-  fileUploadAtts: ->
-    atts = _.clone(this.atts)
+  schemaKey: ->
+    @atts['data-schema-key']
+  fileUploadAtts: () ->
+    t = Template.instance()
+    atts = _.clone(t.data.atts)
     delete atts.collection
     delete atts.onBeforeUpload
     atts
@@ -163,3 +215,6 @@ Template.afSlingshot.helpers
       doc
     else
       null
+
+Template.afSlingshot.helpers helpers
+Template.afSlingshot_ionic.helpers helpers

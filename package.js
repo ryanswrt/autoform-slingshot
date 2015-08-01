@@ -7,7 +7,7 @@ Package.describe({
 });
 
 Package.onUse(function(api) {
-  api.versionsFrom('METEOR@1.0');
+  api.versionsFrom('METEOR@1.1.0.2');
 
   api.use(
     [
@@ -15,12 +15,19 @@ Package.onUse(function(api) {
     'underscore',
     'templating',
     'less',
-    'aldeed:autoform@4.2.2 || 5.1.2',
+    'jquery',
+    'reactive-dict',
+    'aldeed:autoform@5.3.0',
     'edgee:slingshot@0.6.2'
     ],
     'client');
 
+  api.imply([
+    'aldeed:autoform@5.3.0',
+    'edgee:slingshot@0.6.2'
+  ]);
+
   api.addFiles('lib/client/autoform-slingshot.html', 'client');
   api.addFiles('lib/client/autoform-slingshot.less', 'client');
   api.addFiles('lib/client/autoform-slingshot.coffee', 'client');
-}); 
+});
