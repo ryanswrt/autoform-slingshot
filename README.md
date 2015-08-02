@@ -11,7 +11,11 @@ Pretty much a clone of [yogiben:autoform-file](https://atmospherejs.com/yogiben/
 Usage
 =====
 
-Follow Slingshot's instructions on setting up a directive, then define the following autoform rules in your schema.  If you want to resize before upload the following is an example using `thinksoftware:image-resize-client`.
+```
+meteor add timbrandin:autoform-slingshot
+```
+
+Follow Slingshot's instructions on setting up a directive, then define the following autoform rules in your schema.  If you want to resize before upload the following is an example using `timbrandin:image-resize-client`.
 
 ### Upload a file
 
