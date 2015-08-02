@@ -1,165 +1,258 @@
-AutoForm.addInputType 'slingshotFileUpload', {
+SlingshotAutoformFileCache = new Meteor.Collection(null);
+
+AutoForm.addInputType 'slingshotFileUpload',
   template: 'afSlingshot'
-}
+  valueIn: (images) ->
+    t = Template.instance()
+    if t.data and typeof images == 'string' and images.length > 0
+      SlingshotAutoformFileCache.upsert {field: t.data.name}, {
+        field: t.data.name
+        src: images
+      }
+    else
+      _.each images, (image, i) ->
+        if typeof image == 'string'
+          schema = AutoForm.getFormSchema()
+          if schema and schema._schema and t.view.isRendered
+            schemaKey = t.$('[data-schema-key]').data('schema-key')
+            if schemaKey
+              # Replace ".0." with ".$."
+              schemaKey = schemaKey.replace(/\.\d+\./g, '.$.')
+              directives = schema._schema[schemaKey].autoform.afFieldInput.slingshotdirective
+              if directives
+                _directives = _.map(directives, (o, k) ->
+                  if typeof o == 'string'
+                    o = {directive: o}
+                  o.key = k
+                  return o
+                  ).sort((a, b) ->
+                    -a.key.localeCompare b.key
+                  )
+                # debugger
+                SlingshotAutoformFileCache.upsert {field: t.data.name, directive: _directives[i].directive}, {
+                  field: t.data.name
+                  directive: _directives[i].directive
+                  key: _directives[i].key
+                  src: image
+                }
+        else
+          SlingshotAutoformFileCache.upsert {field: t.data.name, directive: image.directive}, _.extend(image,
+           field: t.data.name
+          )
+    images
 
-refreshFileInput = (name)->
-  callback = ->
-    # id = $('.nav-pills[file-input="'+name+'"] > .active > a').attr('href')
-    # value = $('.tab-content[file-input="'+name+'"] >' + id + '>div>input').val()
-    # $('input[name="' + name + '"]').val(value)
-    # console.log name
-    value = $('input[name="' + name + '"]').val()
-    Session.set 'fileUpload['+name+']', value
-  setTimeout callback, 10
+  valueOut: ->
+    field = $(@context).data('schema-key')
+    images = SlingshotAutoformFileCache.find({field: field}, {order: {key: -1}}).fetch()
+    images
 
-getIcon = (file)->
-  if file
-    file = file.toLowerCase()
-    icon = 'file-o'
-    if file.indexOf('youtube.com') > -1
-      icon = 'youtube'
-    else if file.indexOf('vimeo.com') > -1
-      icon = 'vimeo-square'
-    else if file.indexOf('.pdf') > -1
-      icon = 'file-pdf-o'
-    else if file.indexOf('.doc') > -1 || file.indexOf('.docx') > -1
-      icon = 'file-word-o'
-    else if file.indexOf('.ppt') > -1
-      icon = 'file-powerpoint-o'
-    else if file.indexOf('.avi') > -1 || file.indexOf('.mov') > -1 || file.indexOf('.mp4') > -1
-      icon = 'file-movie-o'
-    else if file.indexOf('.png') > -1 || file.indexOf('.jpg') > -1 || file.indexOf('.gif') > -1 || file.indexOf('.bmp') > -1
-      icon = 'file-image-o'
-    else if file.indexOf('http://') > -1 || file.indexOf('https://') > -1
-      icon = 'link'
-    icon
+  valueConverters:
+    string: (images)->
+      if typeof images == 'object' or typeof images == 'array'
+        if typeof images[0] == 'object'
+          images[0].src
 
-getTemplate = (file)->
-  file = file.toLowerCase()
-  template = 'fileThumbIcon'
-  if file.indexOf('.jpg') > -1 || file.indexOf('.png') > -1 || file.indexOf('.gif') > -1
-    template = 'fileThumbImg'
-  template
+    stringArray: (images)->
+      imgs = _.map( images, (image)-> image.src )
+      imgs
 
-clearFilesFromSession = ->
-  _.each Session.keys, (value, key, index)->
-    if key.indexOf('fileUpload') > -1
-      Session.set key, ''
+clearFilesFromCache = ->
+  SlingshotAutoformFileCache.remove({});
 
 getCollection = (context) ->
   if typeof context.atts.collection == 'string'
     context.atts.collection = FS._collections[context.atts.collection] or window[context.atts.collection]
   return context.atts.collection
 
+getTemplate = (filename, parentView) ->
+  if filename
+    filename = filename.toLowerCase()
+    template = 'fileThumbIcon' + (if parentView.name.indexOf('_ionic') > -1 then '_ionic' else '')
+    if filename.indexOf('.jpg') > -1 || filename.indexOf('.png') > -1 || filename.indexOf('.gif') > -1
+      template = 'fileThumbImg' + (if parentView.name.indexOf('_ionic') > -1 then '_ionic' else '')
+    template
+
 AutoForm.addHooks null,
   onSuccess: ->
-    clearFilesFromSession()
+    clearFilesFromCache()
 
-Template.afSlingshot.destroyed = () ->
+destroyed = () ->
   name = @data.name
-  Session.set 'fileUpload['+name+']', null
 
-Template.afSlingshot.events
+Template.afSlingshot.destroyed = destroyed
+Template.afSlingshot_ionic.destroyed = destroyed
+
+uploadWith = (directive, files, name, key) ->
+  if typeof directive == 'string'
+    directiveName = directive
+  else if typeof directive == 'object'
+    if !directive.directive
+      console.error 'Missing directive in ' + key, directive
+    directiveName = directive.directive
+    if directive.onBeforeUpload
+      onBeforeUpload = directive.onBeforeUpload
+
+  uploader = new Slingshot.Upload(directiveName)
+
+  uploadCallback = (file) ->
+    src = ''
+    if file.type.indexOf('image') == 0
+      urlCreator = window.URL or window.webkitURL;
+      src = urlCreator.createObjectURL( file );
+
+    # Add a placeholder for the upload with a Blob data URI, aka Optimistic UI.
+    SlingshotAutoformFileCache.upsert {field: name, directive: directiveName}, {
+      field: name
+      key: key or ''
+      directive: directiveName
+      filename: file.name,
+      src: src
+      uploaded: false
+    }
+    Meteor.defer =>
+      uploader.send file, (err, src) ->
+        if err
+          console.error err
+        else
+          # Update the status and src of the placeholder for the upload.
+          SlingshotAutoformFileCache.upsert {field: name, directive: directiveName}, {$set: {
+            src: src
+            filename: file.name
+            uploaded: true
+          }}
+
+  async.map(
+    files
+    , (file, cb) ->
+      if onBeforeUpload
+        onBeforeUpload file, uploadCallback
+      else
+        uploadCallback file
+    , (err, results) ->
+      if err
+        console.error err
+  )
+
+events =
   "change .file-upload": (e, t) ->
     files = e.target.files
     if typeof files is "undefined" || (files.length is 0) then return
 
-    uploader = new Slingshot.Upload(t.data.atts.slingshotdirective)
+    # Support single and multiple directives.
+    directives = t.data.atts.slingshotdirective;
+    name = $(e.target).attr('file-input')
 
-    uploadCallback = (file) ->
-      uploader.send file, (err, downloadUrl)->
-        if err
-          console.log err
-        else
-          name = $(e.target).attr('file-input')
-          $('input[name="' + name + '"]').val(downloadUrl)
-          Session.set 'fileUploadSelected[' + name + ']', file.name
-          refreshFileInput name
+    # If single directive upload.
+    if typeof directives == 'string'
+      uploadWith directives, files, name
 
-    if t.data.atts.onBeforeUpload
-      t.data.atts.onBeforeUpload( files, uploadCallback )
-    else
-      _.each( files, (file)->
-        uploadCallback file
-      )
+    # If singe directive as object.
+    else if typeof directives == 'object' and 'directive' of directives
+      uploadWith directives, files, name
 
+    # If multiple directive upload with keys.
+    else if typeof directives == 'object'
+      _.each directives, (directive, key) ->
+        uploadWith directive, files, name, key
 
   'click .file-upload-clear': (e, t)->
     name = $(e.currentTarget).attr('file-input')
-    $('input[name="' + name + '"]').val('')
-    Session.set 'fileUpload[' + name + ']', 'delete-file'
+    SlingshotAutoformFileCache.remove({field: name});
 
-Template.afSlingshot.helpers
-  collection: ->
-    #getCollection(@)
+Template.afSlingshot.events events
+Template.afSlingshot_ionic.events events
+
+helpers =
   label: ->
     @atts.label or 'Choose file'
   removeLabel: ->
-    @atts['remove-label'] or 'Remove'
+    @atts['removeLabel'] or 'Remove'
   accept: ->
     @atts.accept or '*'
-  fileUploadAtts: ->
-    atts = _.clone(this.atts)
-    delete atts.collection
-    delete atts.onBeforeUpload
-    atts
+  schemaKey: ->
+    @atts['data-schema-key']
+
   fileUpload: ->
-    af = Template.parentData(1)._af
+    t = Template.instance()
+    select =
+      field: @atts.name
+    # Allow selection of the directive for the thumbnail by key.
+    if @atts.thumbnail
+      select.$or = [{directive: @atts.thumbnail}, {key: @atts.thumbnail}]
+    file = SlingshotAutoformFileCache.findOne(select)
+    if file
+      data: file
+      template: getTemplate file.filename or file.src, t.view
 
-    name = @atts.name
-    uploader = new Slingshot.Upload(@)
+Template.afSlingshot.helpers helpers
+Template.afSlingshot_ionic.helpers helpers
 
-    if af &&  af.submitType == 'insert'
-      doc = af.doc
+Template.fileThumbIcon.helpers
+  icon: ->
+    if @filename
+      file = @filename.toLowerCase()
+      icon = 'document'
+      if file.indexOf('youtube.com') > -1
+        icon = 'youtube'
+      else if file.indexOf('vimeo.com') > -1
+        icon = 'vimeo-square'
+      else if file.indexOf('.pdf') > -1
+        icon = 'file-pdf-o'
+      else if file.indexOf('.doc') > -1 || file.indexOf('.docx') > -1
+        icon = 'file-word-o'
+      else if file.indexOf('.ppt') > -1
+        icon = 'file-powerpoint-o'
+      else if file.indexOf('.avi') > -1 || file.indexOf('.mov') > -1 || file.indexOf('.mp4') > -1
+        icon = 'file-movie-o'
+      else if file.indexOf('.png') > -1 || file.indexOf('.jpg') > -1 || file.indexOf('.gif') > -1 || file.indexOf('.bmp') > -1
+        icon = 'file-image-o'
+      else if file.indexOf('http://') > -1 || file.indexOf('https://') > -1
+        icon = 'link'
+      icon
 
-    parentData = Template.parentData(0).value or Template.parentData(4).value
-    if Session.equals('fileUpload['+name+']', 'delete-file')
-      return null
-    else if !!Session.get('fileUpload['+name+']')
-      file = Session.get('fileUpload['+name+']')
-    else if parentData
-      file = parentData
-    else
-      return null
+Template.fileThumbIcon_ionic.helpers
+  filename: ->
+    if @filename
+      filename = @filename
+      if filename.length > 25
+        filename = filename.slice(0, 25) + '...'
+      filename
+    else if @src
+      filename = @src.replace(/^.*[\\\/]/, '');
+      if filename.length > 25
+        filename = filename.slice(0, 25) + '...'
+      filename
+  icon: ->
+    if @filename
+      file = @filename.toLowerCase()
+      icon = 'file-o'
+      if file.indexOf('youtube.com') > -1
+        icon = 'social-youtube'
+      else if file.indexOf('vimeo.com') > -1
+        icon = 'social-vimeo'
+      else if file.indexOf('.pdf') > -1
+        icon = 'document-text'
+      else if file.indexOf('.doc') > -1 || file.indexOf('.docx') > -1
+        icon = 'document-text'
+      else if file.indexOf('.ppt') > -1
+        icon = 'document'
+      else if file.indexOf('.avi') > -1 || file.indexOf('.mov') > -1 || file.indexOf('.mp4') > -1
+        icon = 'ios-videocam-outline'
+      else if file.indexOf('.png') > -1 || file.indexOf('.jpg') > -1 || file.indexOf('.gif') > -1 || file.indexOf('.bmp') > -1
+        icon = 'image'
+      else if file.indexOf('http://') > -1 || file.indexOf('https://') > -1
+        icon = 'link'
+      icon
 
-    if file != '' && file
-      if file.length == 17
-          # No subscription
-          filename = Session.get 'fileUploadSelected[' + name + ']'
-          obj =
-            template: 'fileThumbIcon'
-            data:
-              filename: filename
-              icon: getIcon filename
-          return obj
-      else
-        filename = file
-        src = filename
-    if filename
-      obj =
-        template: getTemplate(filename)
-        data:
-          src: src
-          filename: filename
-          icon: getIcon(filename)
-      obj
-  fileUploadSelected: (name)->
-    Session.get 'fileUploadSelected['+name+']'
-  isUploaded: (name,collection) ->
-    file = Session.get 'fileUpload['+name+']'
-    isUploaded = false
-    if file && file.length == 17
-      #doc = window[collection].findOne({_id:file})
-      isUploaded = doc.isUploaded()
-    else
-      isUploaded = true
-    isUploaded
-
-  getFileByName: (name,collection)->
-    file = Session.get 'fileUpload['+name+']'
-    if file && file.length == 17
-      #doc = window[collection].findOne({_id:file})
-      console.log doc
-      doc
-    else
-      null
+Template.fileThumbImg_ionic.events(
+  'click [data-action=showActionSheet]': (event) ->
+    IonActionSheet.show(
+      buttons: []
+      destructiveText: i18n 'destructive_text'
+      cancelText: i18n 'cancel_text'
+      destructiveButtonClicked: (()->
+        SlingshotAutoformFileCache.remove({field: this.field});
+        true
+      ).bind(this)
+    )
+)
