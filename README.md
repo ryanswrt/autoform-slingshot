@@ -1,9 +1,7 @@
 Autoform Slingshot
 ==================
 
-Work in progress!
-
-Pretty much a clone of [yogiben:autoform-file](https://atmospherejs.com/yogiben/autoform-file) using [edgee:slingshot](https://atmospherejs.com/edgee/slingshot) instead of CFS,
+Pretty much a clone of [yogiben:autoform-file](https://atmospherejs.com/yogiben/autoform-file) using [edgee:slingshot](https://atmospherejs.com/edgee/slingshot) instead of CFS, based on `ryanswrt:autoform-slingshot`.
 
 > NOTICE! There is no tests, so use at your discretion!
 > We are happy for any PR containing tests, and helping this package get to 1.0.
