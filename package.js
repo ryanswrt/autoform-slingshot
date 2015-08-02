@@ -1,9 +1,9 @@
 Package.describe({
-  name: "ryanswrt:autoform-slingshot",
+  name: "timbrandin:autoform-slingshot",
   summary: "File upload for AutoForm with Slingshot",
   description: "File upload for AutoForm with Slingshot",
   version: "1.0.0",
-  git: "http://github.com/TheAncientGoat/autoform-slingshot.git"
+  git: "http://github.com/timbrandin/autoform-slingshot.git"
 });
 
 Npm.depends({
