@@ -1,11 +1,32 @@
 SlingshotAutoformFileCache = new Meteor.Collection(null);
 
+swapTemp = (file) ->
+  src = file
+  if typeof file == 'object' and file.src
+    if file.tmp
+      return file.tmp
+    src = file.src
+  _file = SlingshotAutoformFileCache.findOne
+    src: src
+    tmp:
+      $exists: true
+  if _file
+    return _file.tmp
+  return src
+
+UI.registerHelper 'swapTemp', swapTemp
+
 AutoForm.addInputType 'slingshotFileUpload',
   template: 'afSlingshot'
   valueIn: (images) ->
+    # Add input data into the file cache.
     t = Template.instance()
     if t.data and typeof images == 'string' and images.length > 0
-      SlingshotAutoformFileCache.upsert {field: t.data.name}, {
+      SlingshotAutoformFileCache.upsert {
+        template: t.data.id
+        field: t.data.name
+      }, {
+        template: t.data.id
         field: t.data.name
         src: images
       }
@@ -28,22 +49,38 @@ AutoForm.addInputType 'slingshotFileUpload',
                   ).sort((a, b) ->
                     -a.key.localeCompare b.key
                   )
-                # debugger
-                SlingshotAutoformFileCache.upsert {field: t.data.name, directive: _directives[i].directive}, {
+                SlingshotAutoformFileCache.upsert {
+                  template: t.data.id
+                  field: t.data.name
+                  directive: _directives[i].directive
+                }, {
+                  template: t.data.id
                   field: t.data.name
                   directive: _directives[i].directive
                   key: _directives[i].key
                   src: image
                 }
         else
-          SlingshotAutoformFileCache.upsert {field: t.data.name, directive: image.directive}, _.extend(image,
-           field: t.data.name
+          SlingshotAutoformFileCache.upsert {
+            template: t.data.id
+            field: t.data.name
+            directive: image.directive
+          }, _.extend(image,
+            template: t.data.id
+            field: t.data.name
           )
     images
 
   valueOut: ->
-    field = $(@context).data('schema-key')
-    images = SlingshotAutoformFileCache.find({field: field}, {order: {key: -1}}).fetch()
+    fieldName = $(@context).data('schema-key')
+    templateInstanceId = $(@context).data('id')
+    images = SlingshotAutoformFileCache.find({
+      template: templateInstanceId
+      field: fieldName
+    }, {
+      order:
+        key: -1
+    }).fetch()
     images
 
   valueConverters:
@@ -55,9 +92,6 @@ AutoForm.addInputType 'slingshotFileUpload',
     stringArray: (images)->
       imgs = _.map( images, (image)-> image.src )
       imgs
-
-clearFilesFromCache = ->
-  SlingshotAutoformFileCache.remove({});
 
 getCollection = (context) ->
   if typeof context.atts.collection == 'string'
@@ -72,17 +106,7 @@ getTemplate = (filename, parentView) ->
       template = 'fileThumbImg' + (if parentView.name.indexOf('_ionic') > -1 then '_ionic' else '')
     template
 
-AutoForm.addHooks null,
-  onSuccess: ->
-    clearFilesFromCache()
-
-destroyed = () ->
-  name = @data.name
-
-Template.afSlingshot.destroyed = destroyed
-Template.afSlingshot_ionic.destroyed = destroyed
-
-uploadWith = (directive, files, name, key) ->
+uploadWith = (directive, files, name, key, instance) ->
   if typeof directive == 'string'
     directiveName = directive
   else if typeof directive == 'object'
@@ -95,69 +119,82 @@ uploadWith = (directive, files, name, key) ->
   uploader = new Slingshot.Upload(directiveName)
 
   uploadCallback = (file) ->
+    instance = this
     src = ''
+    statusTracking = null
+
     if file.type.indexOf('image') == 0
       urlCreator = window.URL or window.webkitURL;
-      src = urlCreator.createObjectURL( file );
-
-    # Add a placeholder for the upload with a Blob data URI, aka Optimistic UI.
-    SlingshotAutoformFileCache.upsert {field: name, directive: directiveName}, {
-      field: name
-      key: key or ''
-      directive: directiveName
-      filename: file.name,
-      src: src
-      uploaded: false
-    }
+      tmp = urlCreator.createObjectURL( file );
     Meteor.defer =>
-      uploader.send file, (err, src) ->
+      upload = uploader.send file, (err, src) ->
+        # Stop tracking status when upload is done.
+        statusTracking.stop()
         if err
           console.error err
         else
-          # Update the status and src of the placeholder for the upload.
-          SlingshotAutoformFileCache.upsert {field: name, directive: directiveName}, {$set: {
-            src: src
-            filename: file.name
-            uploaded: true
+          # Patch cache upload.
+          SlingshotAutoformFileCache.upsert {
+            template: instance.data.atts.id
+            field: name
+            directive: directiveName
+          }, {$unset: {
+            tmp: ''
           }}
 
-  async.map(
-    files
-    , (file, cb) ->
-      if onBeforeUpload
-        onBeforeUpload file, uploadCallback
-      else
-        uploadCallback file
-    , (err, results) ->
-      if err
-        console.error err
-  )
+      # Wait for authorization and for transfer to start.
+      statusTracking = Tracker.autorun =>
+        status = upload.status()
+        if status == 'transferring' and upload.instructions
+          # Add a placeholder for the upload with a Blob data URI, aka Optimistic UI.
+          SlingshotAutoformFileCache.upsert {
+            template: instance.data.atts.id
+            field: name
+            directive: directiveName
+          }, {
+            template: instance.data.atts.id
+            field: name
+            key: key or ''
+            directive: directiveName
+            filename: file.name
+            src: upload.instructions.download
+            tmp: tmp
+          }
+
+  # Send uploadCallback direcly or pass it through onBeforeUpload if available.
+  _.map files, (file) ->
+    if onBeforeUpload
+      onBeforeUpload file, uploadCallback.bind(instance)
+    else
+      uploadCallback.call instance, file
 
 events =
-  "change .file-upload": (e, t) ->
+  "change .file-upload": (e, instance) ->
     files = e.target.files
     if typeof files is "undefined" || (files.length is 0) then return
 
     # Support single and multiple directives.
-    directives = t.data.atts.slingshotdirective;
+    directives = instance.data.atts.slingshotdirective;
     name = $(e.target).attr('file-input')
 
     # If single directive upload.
     if typeof directives == 'string'
-      uploadWith directives, files, name
+      uploadWith directives, files, name, null, instance
 
     # If singe directive as object.
     else if typeof directives == 'object' and 'directive' of directives
-      uploadWith directives, files, name
+      uploadWith directives, files, name, null, instance
 
     # If multiple directive upload with keys.
     else if typeof directives == 'object'
       _.each directives, (directive, key) ->
-        uploadWith directive, files, name, key
+        uploadWith directive, files, name, key, instance
 
-  'click .file-upload-clear': (e, t)->
+  'click .file-upload-clear': (e, instance)->
     name = $(e.currentTarget).attr('file-input')
-    SlingshotAutoformFileCache.remove({field: name});
+    SlingshotAutoformFileCache.remove
+      template: instance.data.atts.id
+      field: name
 
 Template.afSlingshot.events events
 Template.afSlingshot_ionic.events events
@@ -171,10 +208,13 @@ helpers =
     @atts.accept or '*'
   schemaKey: ->
     @atts['data-schema-key']
+  templateInstanceId: ->
+    @atts['id']
 
   fileUpload: ->
     t = Template.instance()
     select =
+      template: t.data.atts.id
       field: @atts.name
     # Allow selection of the directive for the thumbnail by key.
     if @atts.thumbnail
@@ -251,7 +291,7 @@ Template.fileThumbImg_ionic.events(
       destructiveText: i18n 'destructive_text'
       cancelText: i18n 'cancel_text'
       destructiveButtonClicked: (()->
-        SlingshotAutoformFileCache.remove({field: this.field});
+        SlingshotAutoformFileCache.remove({template: this.template, field: this.field});
         true
       ).bind(this)
     )
