@@ -1,6 +1,6 @@
 SlingshotAutoformFileCache = new Meteor.Collection(null);
 
-swapTemp = (file) ->
+SwapTemp = (file) ->
   src = file
   if typeof file == 'object' and file.src
     if file.tmp
@@ -14,7 +14,7 @@ swapTemp = (file) ->
     return _file.tmp
   return src
 
-UI.registerHelper 'swapTemp', swapTemp
+UI.registerHelper 'swapTemp', SwapTemp
 
 AutoForm.addInputType 'slingshotFileUpload',
   template: 'afSlingshot'
