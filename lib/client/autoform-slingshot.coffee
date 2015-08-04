@@ -132,13 +132,6 @@ uploadWith = (directive, files, name, key, instance) ->
         statusTracking.stop()
         if err
           console.error err
-        else
-          # Patch cache upload.
-          SlingshotAutoformFileCache.remove {
-            template: instance.data.atts.id
-            field: name
-            directive: directiveName
-          }
 
       # Wait for authorization and for transfer to start.
       statusTracking = Tracker.autorun =>
