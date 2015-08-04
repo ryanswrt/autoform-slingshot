@@ -2,8 +2,8 @@ Package.describe({
   name: "ryanswrt:autoform-slingshot",
   summary: "File upload for AutoForm with Slingshot",
   description: "File upload for AutoForm with Slingshot",
-  version: "1.0.0",
-  git: "http://github.com/TheAncientGoat/autoform-slingshot.git"
+  version: "1.1.0",
+  git: "http://github.com/TheAncientGoat/autoform-slingshot"
 });
 
 Package.onUse(function(api) {
