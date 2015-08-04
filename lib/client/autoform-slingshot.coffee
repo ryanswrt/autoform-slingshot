@@ -93,6 +93,13 @@ AutoForm.addInputType 'slingshotFileUpload',
       imgs = _.map( images, (image)-> image.src )
       imgs
 
+# Remove pictures from cache when saved to document.
+AutoForm.addHooks null,
+  onSuccess: ->
+    if @currentDoc and @currentDoc.pictures
+      _.each @currentDoc.pictures, (picture) ->
+        SlingshotAutoformFileCache.remove({src: picture.src});
+
 getCollection = (context) ->
   if typeof context.atts.collection == 'string'
     context.atts.collection = FS._collections[context.atts.collection] or window[context.atts.collection]
