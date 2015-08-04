@@ -1,5 +1,5 @@
 <template name="afSlingshot">
-  <div class="form-group file-upload" data-schema-key="{{schemaKey}}">
+  <div class="form-group file-upload" data-schema-key="{{schemaKey}}" data-id="{{templateInstanceId}}">
     {{#if fileUpload}}
     {{#with fileUpload}}
     {{> Template.dynamic template=template data=data}}
@@ -16,7 +16,7 @@
 </template>
 
 <template name="afSlingshot_ionic">
-  <div class="form-group file-upload" data-schema-key="{{schemaKey}}">
+  <div class="form-group file-upload" data-schema-key="{{schemaKey}}" data-id="{{templateInstanceId}}">
     {{#if fileUpload}}
     {{#with fileUpload}}
     {{> Template.dynamic template=template data=data}}
@@ -44,9 +44,9 @@
 </template>
 
 <template name="fileThumbImg">
-  <img src="{{src}}" alt="" class="img-fileUpload-thumbnail img-thumbnail img-rounded">
+  <img src="{{swapTemp src}}" alt="" class="img-fileUpload-thumbnail img-thumbnail img-rounded">
 </template>
 
 <template name="fileThumbImg_ionic">
-  <img src="{{src}}" alt="" class="img-fileUpload-thumbnail img-thumbnail img-rounded" data-action="showActionSheet">
+  <img src="{{swapTemp src}}" alt="" class="img-fileUpload-thumbnail img-thumbnail img-rounded" data-action="showActionSheet">
 </template>

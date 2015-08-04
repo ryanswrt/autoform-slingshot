@@ -34,4 +34,6 @@ Package.onUse(function(api) {
     "i18n/en.i18n.json",
     "i18n/sv.i18n.json"
   ], ["client", "server"]);
+
+  api.export('SwapTemp');
 });
