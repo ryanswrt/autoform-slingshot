@@ -81,13 +81,16 @@ AutoForm.addInputType 'slingshotFileUpload',
       order:
         key: -1
     }).fetch()
-    images
+    if images.length > 0
+      return images
+    return @val()
 
   valueConverters:
     string: (images)->
       if typeof images == 'object' or typeof images == 'array'
         if typeof images[0] == 'object'
-          images[0].src
+          return images[0].src
+      return ""
 
     stringArray: (images)->
       imgs = _.map( images, (image)-> image.src )
