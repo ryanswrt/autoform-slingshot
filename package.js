@@ -44,4 +44,4 @@ function configure(api) {
   ], ["client", "server"]);
 
   api.export('SwapTemp');
-});
+}
