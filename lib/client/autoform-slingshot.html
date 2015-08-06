@@ -7,9 +7,9 @@
     <br/>
     <a class="file-upload-clear" file-input="{{name}}"><i class="fa fa-times"></i> {{removeLabel}}</a>
     {{else}}
-    <label for="file-{{name}}">
+    <label for="file-{{name}}-{{templateInstanceId}}">
       {{label}}
-      <input class="hidden" id="file-{{name}}" file-input="{{name}}" type="file" accept="{{accept}}" />
+      <input class="hidden" id="file-{{name}}-{{templateInstanceId}}" file-input="{{name}}" type="file" accept="{{accept}}" />
     </label>
     {{/if}}
   </div>
@@ -24,9 +24,9 @@
     <br/>
     <a class="btn btn-default file-upload-clear" file-input="{{name}}"><i class="fa fa-times"></i> {{removeLabel}}</a>
     {{else}}
-    <label for="file-{{name}}" class="btn btn-default">
+    <label for="file-{{name}}-{{templateInstanceId}}" class="btn btn-default">
       {{label}}
-      <input class="hidden" id="file-{{name}}" file-input="{{name}}" type="file" accept="{{accept}}" />
+      <input class="hidden" id="file-{{name}}-{{templateInstanceId}}" file-input="{{name}}" type="file" accept="{{accept}}" />
     </label>
     {{/if}}
   </div>
@@ -40,9 +40,9 @@
     {{> Template.dynamic template=template data=data}}
     {{/with}}
     {{else}}
-      <label for="file-{{name}}" class="button button-block">
+      <label for="file-{{name}}-{{templateInstanceId}}" class="button button-block">
         {{#with afFieldLabelText name=this.name}}{{label}}{{/with}}
-        <input class="hidden" id="file-{{name}}" file-input="{{name}}" type="file" accept="{{accept}}" />
+        <input class="hidden" id="file-{{name}}-{{templateInstanceId}}" file-input="{{name}}" type="file" accept="{{accept}}" />
       </label>
     {{/if}}
     </div>
@@ -53,9 +53,9 @@
     {{> Template.dynamic template=template data=data}}
     {{/with}}
     {{else}}
-      <label for="file-{{name}}" class="button button-small">
+      <label for="file-{{name}}-{{templateInstanceId}}" class="button button-small">
         {{#with afFieldLabelText name=this.name}}{{label}}{{/with}}
-        <input class="hidden" id="file-{{name}}" file-input="{{name}}" type="file" accept="{{accept}}" />
+        <input class="hidden" id="file-{{name}}-{{templateInstanceId}}" file-input="{{name}}" type="file" accept="{{accept}}" />
       </label>
     {{/if}}
   </div>

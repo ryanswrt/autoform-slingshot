@@ -129,7 +129,6 @@ uploadWith = (directive, files, name, key, instance) ->
   uploader = new Slingshot.Upload(directiveName)
 
   uploadCallback = (file) ->
-    instance = this
     src = ''
     statusTracking = null
 
@@ -165,9 +164,9 @@ uploadWith = (directive, files, name, key, instance) ->
   # Send uploadCallback direcly or pass it through onBeforeUpload if available.
   _.map files, (file) ->
     if onBeforeUpload
-      onBeforeUpload file, uploadCallback.bind(instance)
+      onBeforeUpload file, uploadCallback #.bind(instance)
     else
-      uploadCallback.call instance, file
+      uploadCallback file
 
 events =
   "change .file-upload": (e, instance) ->
@@ -198,8 +197,19 @@ events =
       field: name
 
 Template['afSlingshot'].events events
-Template['afSlingshot_ionic'].events events
 Template['afSlingshot_bootstrap3'].events events
+Template['afSlingshot_ionic'].events _.extend(events, {
+  'click [data-action=showActionSheet]': (event) ->
+    IonActionSheet.show(
+      buttons: []
+      destructiveText: i18n 'destructive_text'
+      cancelText: i18n 'cancel_text'
+      destructiveButtonClicked: (()->
+        SlingshotAutoformFileCache.remove({template: this.template, field: this.field});
+        true
+      ).bind(this)
+    )
+})
 
 
 helpers =
@@ -241,6 +251,21 @@ Template['afSlingshot_ionic'].helpers helpers
 Template['afSlingshot_bootstrap3'].helpers helpers
 
 thumbIconHelpers =
+  filename: ->
+    if @filename
+      filename = @filename
+      if filename.length > 23
+        filename = filename.slice(0, 22) + '...'
+      filename
+    else if @src
+      filename = @src.replace(/^.*[\\\/]/, '');
+      if filename.length > 23
+        filename = filename.slice(0, 22) + '...'
+      filename
+
+Template['fileThumbIcon'].helpers thumbIconHelpers
+
+Template['fileThumbIcon_bootstrap3'].helpers _.extend(thumbIconHelpers, {
   icon: ->
     if @filename
       file = @filename.toLowerCase()
@@ -262,21 +287,9 @@ thumbIconHelpers =
       else if file.indexOf('http://') > -1 || file.indexOf('https://') > -1
         icon = 'link'
       icon
+})
 
-Template['fileThumbIcon'].helpers thumbIconHelpers
-
-Template.fileThumbIcon_ionic.helpers
-  filename: ->
-    if @filename
-      filename = @filename
-      if filename.length > 23
-        filename = filename.slice(0, 22) + '...'
-      filename
-    else if @src
-      filename = @src.replace(/^.*[\\\/]/, '');
-      if filename.length > 23
-        filename = filename.slice(0, 22) + '...'
-      filename
+Template.fileThumbIcon_ionic.helpers _.extend(thumbIconHelpers, {
   icon: ->
     file = ""
     if @filename
@@ -301,16 +314,4 @@ Template.fileThumbIcon_ionic.helpers
     else if file.indexOf('http://') > -1 || file.indexOf('https://') > -1
       icon = 'link'
     icon
-
-Template['afSlingshot_ionic'].events(
-  'click [data-action=showActionSheet]': (event) ->
-    IonActionSheet.show(
-      buttons: []
-      destructiveText: i18n 'destructive_text'
-      cancelText: i18n 'cancel_text'
-      destructiveButtonClicked: (()->
-        SlingshotAutoformFileCache.remove({template: this.template, field: this.field});
-        true
-      ).bind(this)
-    )
-)
+})
