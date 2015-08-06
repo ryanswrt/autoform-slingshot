@@ -40,7 +40,7 @@
     {{> Template.dynamic template=template data=data}}
     {{/with}}
     {{else}}
-      <label for="file-{{name}}" class="button button-block button-calm">
+      <label for="file-{{name}}" class="button button-block">
         {{#with afFieldLabelText name=this.name}}{{label}}{{/with}}
         <input class="hidden" id="file-{{name}}" file-input="{{name}}" type="file" accept="{{accept}}" />
       </label>
@@ -53,7 +53,7 @@
     {{> Template.dynamic template=template data=data}}
     {{/with}}
     {{else}}
-      <label for="file-{{name}}" class="button button-calm button-small">
+      <label for="file-{{name}}" class="button button-small">
         {{#with afFieldLabelText name=this.name}}{{label}}{{/with}}
         <input class="hidden" id="file-{{name}}" file-input="{{name}}" type="file" accept="{{accept}}" />
       </label>
@@ -75,7 +75,7 @@
 </template>
 
 <template name="fileThumbIcon_ionic">
-  <span class="button button-calm button-small" title="{{src}}" data-action="showActionSheet">
+  <span class="button button-small" title="{{src}}" data-action="showActionSheet">
     {{> ionIcon icon=icon}} {{filename}}
   </span>
 </template>
