@@ -197,14 +197,25 @@ events =
       template: instance.data.atts.id
       field: name
 
-Template.afSlingshot.events events
-Template.afSlingshot_ionic.events events
+Template['afSlingshot'].events events
+Template['afSlingshot_ionic'].events events
+Template['afSlingshot_bootstrap3'].events events
+
 
 helpers =
   label: ->
-    @atts.label or 'Choose file'
+    if @atts and @atts.label
+      @atts.label
+    else
+      'Choose file'
   removeLabel: ->
     @atts['removeLabel'] or 'Remove'
+
+  skipGroupLabel: ->
+    data = Template.parentData(6)
+    if data and data.data
+      return data.data.skipLabel
+    false
   accept: ->
     @atts.accept or '*'
   schemaKey: ->
@@ -225,10 +236,11 @@ helpers =
       data: file
       template: getTemplate file.filename or file.src, t.view
 
-Template.afSlingshot.helpers helpers
-Template.afSlingshot_ionic.helpers helpers
+Template['afSlingshot'].helpers helpers
+Template['afSlingshot_ionic'].helpers helpers
+Template['afSlingshot_bootstrap3'].helpers helpers
 
-Template.fileThumbIcon.helpers
+thumbIconHelpers =
   icon: ->
     if @filename
       file = @filename.toLowerCase()
@@ -251,41 +263,46 @@ Template.fileThumbIcon.helpers
         icon = 'link'
       icon
 
+Template['fileThumbIcon'].helpers thumbIconHelpers
+
 Template.fileThumbIcon_ionic.helpers
   filename: ->
     if @filename
       filename = @filename
-      if filename.length > 25
-        filename = filename.slice(0, 25) + '...'
+      if filename.length > 23
+        filename = filename.slice(0, 22) + '...'
       filename
     else if @src
       filename = @src.replace(/^.*[\\\/]/, '');
-      if filename.length > 25
-        filename = filename.slice(0, 25) + '...'
+      if filename.length > 23
+        filename = filename.slice(0, 22) + '...'
       filename
   icon: ->
+    file = ""
     if @filename
       file = @filename.toLowerCase()
-      icon = 'file-o'
-      if file.indexOf('youtube.com') > -1
-        icon = 'social-youtube'
-      else if file.indexOf('vimeo.com') > -1
-        icon = 'social-vimeo'
-      else if file.indexOf('.pdf') > -1
-        icon = 'document-text'
-      else if file.indexOf('.doc') > -1 || file.indexOf('.docx') > -1
-        icon = 'document-text'
-      else if file.indexOf('.ppt') > -1
-        icon = 'document'
-      else if file.indexOf('.avi') > -1 || file.indexOf('.mov') > -1 || file.indexOf('.mp4') > -1
-        icon = 'ios-videocam-outline'
-      else if file.indexOf('.png') > -1 || file.indexOf('.jpg') > -1 || file.indexOf('.gif') > -1 || file.indexOf('.bmp') > -1
-        icon = 'image'
-      else if file.indexOf('http://') > -1 || file.indexOf('https://') > -1
-        icon = 'link'
-      icon
+    else
+      file = @src.toLowerCase()
+    icon = 'file-o'
+    if file.indexOf('youtube.com') > -1
+      icon = 'social-youtube'
+    else if file.indexOf('vimeo.com') > -1
+      icon = 'social-vimeo'
+    else if file.indexOf('.pdf') > -1
+      icon = 'document-text'
+    else if file.indexOf('.doc') > -1 || file.indexOf('.docx') > -1
+      icon = 'document-text'
+    else if file.indexOf('.ppt') > -1
+      icon = 'document'
+    else if file.indexOf('.avi') > -1 || file.indexOf('.mov') > -1 || file.indexOf('.mp4') > -1
+      icon = 'ios-videocam-outline'
+    else if file.indexOf('.png') > -1 || file.indexOf('.jpg') > -1 || file.indexOf('.gif') > -1 || file.indexOf('.bmp') > -1
+      icon = 'image'
+    else if file.indexOf('http://') > -1 || file.indexOf('https://') > -1
+      icon = 'link'
+    icon
 
-Template.fileThumbImg_ionic.events(
+Template['afSlingshot_ionic'].events(
   'click [data-action=showActionSheet]': (event) ->
     IonActionSheet.show(
       buttons: []

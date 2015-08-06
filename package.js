@@ -2,11 +2,15 @@ Package.describe({
   name: "ryanswrt:autoform-slingshot",
   summary: "File upload for AutoForm with Slingshot",
   description: "File upload for AutoForm with Slingshot",
-  version: "1.1.0",
-  git: "http://github.com/TheAncientGoat/autoform-slingshot"
+  version: "1.1.1",
+  git: "https://github.com/TheAncientGoat/autoform-slingshot"
 });
 
 Package.onUse(function(api) {
+  configure(api);
+});
+
+function configure(api) {
   api.versionsFrom('METEOR@1.1.0.2');
 
   api.use([
@@ -15,13 +19,17 @@ Package.onUse(function(api) {
     'templating',
     'less',
     'jquery',
-    'reactive-dict',
     'aldeed:autoform@5.3.0',
     'edgee:slingshot@0.6.2',
     "tap:i18n@1.5.1"
-  ], 'client');
+  ], ['client', 'server']);
 
-  api.imply('tap:i18n');
+  api.imply([
+    'aldeed:autoform',
+    'edgee:slingshot',
+    'tap:i18n'
+  ]);
+
   api.addFiles('i18n/package-tap.i18n', ["client", "server"]);
 
   api.addFiles([
