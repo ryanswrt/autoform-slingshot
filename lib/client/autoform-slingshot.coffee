@@ -81,13 +81,16 @@ AutoForm.addInputType 'slingshotFileUpload',
       order:
         key: -1
     }).fetch()
-    images
+    if images.length > 0
+      return images
+    return @val()
 
   valueConverters:
     string: (images)->
       if typeof images == 'object' or typeof images == 'array'
         if typeof images[0] == 'object'
-          images[0].src
+          return images[0].src
+      return ""
 
     stringArray: (images)->
       imgs = _.map( images, (image)-> image.src )
@@ -126,7 +129,6 @@ uploadWith = (directive, files, name, key, instance) ->
   uploader = new Slingshot.Upload(directiveName)
 
   uploadCallback = (file) ->
-    instance = this
     src = ''
     statusTracking = null
 
@@ -162,9 +164,9 @@ uploadWith = (directive, files, name, key, instance) ->
   # Send uploadCallback direcly or pass it through onBeforeUpload if available.
   _.map files, (file) ->
     if onBeforeUpload
-      onBeforeUpload file, uploadCallback.bind(instance)
+      onBeforeUpload file, uploadCallback #.bind(instance)
     else
-      uploadCallback.call instance, file
+      uploadCallback file
 
 events =
   "change .file-upload": (e, instance) ->
@@ -194,14 +196,36 @@ events =
       template: instance.data.atts.id
       field: name
 
-Template.afSlingshot.events events
-Template.afSlingshot_ionic.events events
+Template['afSlingshot'].events events
+Template['afSlingshot_bootstrap3'].events events
+Template['afSlingshot_ionic'].events _.extend(events, {
+  'click [data-action=showActionSheet]': (event) ->
+    IonActionSheet.show(
+      buttons: []
+      destructiveText: i18n 'destructive_text'
+      cancelText: i18n 'cancel_text'
+      destructiveButtonClicked: (()->
+        SlingshotAutoformFileCache.remove({template: this.template, field: this.field});
+        true
+      ).bind(this)
+    )
+})
+
 
 helpers =
   label: ->
-    @atts.label or 'Choose file'
+    if @atts and @atts.label
+      @atts.label
+    else
+      'Choose file'
   removeLabel: ->
     @atts['removeLabel'] or 'Remove'
+
+  skipGroupLabel: ->
+    data = Template.parentData(6)
+    if data and data.data
+      return data.data.skipLabel
+    false
   accept: ->
     @atts.accept or '*'
   schemaKey: ->
@@ -222,10 +246,26 @@ helpers =
       data: file
       template: getTemplate file.filename or file.src, t.view
 
-Template.afSlingshot.helpers helpers
-Template.afSlingshot_ionic.helpers helpers
+Template['afSlingshot'].helpers helpers
+Template['afSlingshot_ionic'].helpers helpers
+Template['afSlingshot_bootstrap3'].helpers helpers
 
-Template.fileThumbIcon.helpers
+thumbIconHelpers =
+  filename: ->
+    if @filename
+      filename = @filename
+      if filename.length > 23
+        filename = filename.slice(0, 22) + '...'
+      filename
+    else if @src
+      filename = @src.replace(/^.*[\\\/]/, '');
+      if filename.length > 23
+        filename = filename.slice(0, 22) + '...'
+      filename
+
+Template['fileThumbIcon'].helpers thumbIconHelpers
+
+Template['fileThumbIcon_bootstrap3'].helpers _.extend(thumbIconHelpers, {
   icon: ->
     if @filename
       file = @filename.toLowerCase()
@@ -247,50 +287,31 @@ Template.fileThumbIcon.helpers
       else if file.indexOf('http://') > -1 || file.indexOf('https://') > -1
         icon = 'link'
       icon
+})
 
-Template.fileThumbIcon_ionic.helpers
-  filename: ->
-    if @filename
-      filename = @filename
-      if filename.length > 25
-        filename = filename.slice(0, 25) + '...'
-      filename
-    else if @src
-      filename = @src.replace(/^.*[\\\/]/, '');
-      if filename.length > 25
-        filename = filename.slice(0, 25) + '...'
-      filename
+Template.fileThumbIcon_ionic.helpers _.extend(thumbIconHelpers, {
   icon: ->
+    file = ""
     if @filename
       file = @filename.toLowerCase()
-      icon = 'file-o'
-      if file.indexOf('youtube.com') > -1
-        icon = 'social-youtube'
-      else if file.indexOf('vimeo.com') > -1
-        icon = 'social-vimeo'
-      else if file.indexOf('.pdf') > -1
-        icon = 'document-text'
-      else if file.indexOf('.doc') > -1 || file.indexOf('.docx') > -1
-        icon = 'document-text'
-      else if file.indexOf('.ppt') > -1
-        icon = 'document'
-      else if file.indexOf('.avi') > -1 || file.indexOf('.mov') > -1 || file.indexOf('.mp4') > -1
-        icon = 'ios-videocam-outline'
-      else if file.indexOf('.png') > -1 || file.indexOf('.jpg') > -1 || file.indexOf('.gif') > -1 || file.indexOf('.bmp') > -1
-        icon = 'image'
-      else if file.indexOf('http://') > -1 || file.indexOf('https://') > -1
-        icon = 'link'
-      icon
-
-Template.fileThumbImg_ionic.events(
-  'click [data-action=showActionSheet]': (event) ->
-    IonActionSheet.show(
-      buttons: []
-      destructiveText: i18n 'destructive_text'
-      cancelText: i18n 'cancel_text'
-      destructiveButtonClicked: (()->
-        SlingshotAutoformFileCache.remove({template: this.template, field: this.field});
-        true
-      ).bind(this)
-    )
-)
+    else
+      file = @src.toLowerCase()
+    icon = 'file-o'
+    if file.indexOf('youtube.com') > -1
+      icon = 'social-youtube'
+    else if file.indexOf('vimeo.com') > -1
+      icon = 'social-vimeo'
+    else if file.indexOf('.pdf') > -1
+      icon = 'document-text'
+    else if file.indexOf('.doc') > -1 || file.indexOf('.docx') > -1
+      icon = 'document-text'
+    else if file.indexOf('.ppt') > -1
+      icon = 'document'
+    else if file.indexOf('.avi') > -1 || file.indexOf('.mov') > -1 || file.indexOf('.mp4') > -1
+      icon = 'ios-videocam-outline'
+    else if file.indexOf('.png') > -1 || file.indexOf('.jpg') > -1 || file.indexOf('.gif') > -1 || file.indexOf('.bmp') > -1
+      icon = 'image'
+    else if file.indexOf('http://') > -1 || file.indexOf('https://') > -1
+      icon = 'link'
+    icon
+})
