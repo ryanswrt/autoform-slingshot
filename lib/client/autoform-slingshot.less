@@ -1,6 +1,10 @@
 // general
+.file-upload {
+  position: relative;
+}
+
 .file-upload img {
- max-width: 100%;
+  max-width: 100%;
 }
 
 label input.hidden {
@@ -8,7 +12,17 @@ label input.hidden {
 }
 
 // ionic
+.ionic-body .file-upload {
+  flex: 0 1 63%;
+}
+
+.file-upload .button.button-block {
+  margin: 0;
+}
+
 .card .file-upload img {
+  position: relative;
+  right: initial;
   margin: -1px 0 -4px;
 }
 

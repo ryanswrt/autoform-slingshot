@@ -119,6 +119,10 @@ picture: {
 'picture.$.directive': { type: String }
 ```
 
+#### Want to display a picture not done uploading?
+
+Use the helper `{{SwapTemp IMAGE_SRC_FROM_COLLECTION}}` and it will swap the src with a blob until the image is uploaded and after that it will swap back to src, the user won't even notice the swap. The helper is also available as the function `SwapTemp(IMAGE_SRC_FROM_COLLECTION)`. Happy coding!
+
 ### Framework support
 
 - [x] Bootstrap 3
