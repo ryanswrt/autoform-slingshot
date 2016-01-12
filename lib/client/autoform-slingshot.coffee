@@ -78,6 +78,7 @@ AutoForm.addHooks null,
 
 destroyed = () ->
   name = @data.name
+  clearFilesFromCache()
 
 Template.afSlingshot.destroyed = destroyed
 Template.afSlingshot_ionic.destroyed = destroyed
