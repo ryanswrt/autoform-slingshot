@@ -17,7 +17,7 @@ Package.onUse(function(api) {
     'coffeescript',
     'underscore',
     'templating',
-    'less',
+    'less@1.0.0 || 2.5.0',
     'jquery',
     'reactive-dict',
     'aldeed:autoform@5.3.0',
