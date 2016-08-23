@@ -1,17 +1,19 @@
 Autoform Slingshot
 ==================
 
-Work in progress!
+Pretty much a clone of [yogiben:autoform-file](https://atmospherejs.com/yogiben/autoform-file) using [edgee:slingshot](https://atmospherejs.com/edgee/slingshot) instead of CFS, based on `ryanswrt:autoform-slingshot`.
 
-Pretty much a clone of [yogiben:autoform-file](https://atmospherejs.com/yogiben/autoform-file) using [edgee:slingshot](https://atmospherejs.com/edgee/slingshot) instead of CFS,
-
-> NOTICE! There is no tests, so use at your discretion!
+> NOTICE! There is no tests, so use at your own discretion!
 > We are happy for any PR containing tests, and helping this package get to 1.0.
 
 Usage
 =====
 
-Follow Slingshot's instructions on setting up a directive, then define the following autoform rules in your schema.  If you want to resize before upload the following is an example using `thinksoftware:image-resize-client`.
+```
+meteor add timbrandin:autoform-slingshot
+```
+
+Follow Slingshot's instructions on setting up a directive, then define the following autoform rules in your schema.  If you want to resize before upload the following is an example using `timbrandin:image-resize-client`.
 
 ### Upload a file
 

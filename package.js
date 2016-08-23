@@ -1,17 +1,17 @@
 Package.describe({
-  name: "ryanswrt:autoform-slingshot",
+  name: "timbrandin:autoform-slingshot",
   summary: "File upload for AutoForm with Slingshot",
   description: "File upload for AutoForm with Slingshot",
-  version: "1.0.0",
-  git: "http://github.com/TheAncientGoat/autoform-slingshot.git"
-});
-
-Npm.depends({
-  "async": "1.4.0"
+  version: "1.1.2",
+  git: "http://github.com/timbrandin/autoform-slingshot.git"
 });
 
 Package.onUse(function(api) {
-  api.versionsFrom('METEOR@1.1.0.2');
+  configure(api);
+});
+
+function configure(api) {
+  api.versionsFrom('METEOR@1.2');
 
   api.use([
     'coffeescript',
@@ -19,20 +19,22 @@ Package.onUse(function(api) {
     'templating',
     'less',
     'jquery',
-    'reactive-dict',
     'aldeed:autoform@5.3.0',
     'edgee:slingshot@0.6.2',
-    'cosmos:browserify@0.4.0',
     "tap:i18n@1.5.1"
-  ], 'client');
+  ], ['client', 'server']);
 
-  api.imply('tap:i18n');
+  api.imply([
+    'aldeed:autoform',
+    'edgee:slingshot',
+    'tap:i18n'
+  ]);
+
   api.addFiles('i18n/package-tap.i18n', ["client", "server"]);
 
   api.addFiles([
     'lib/client/autoform-slingshot.html',
     'lib/client/autoform-slingshot.less',
-    'client.browserify.js',
     'lib/client/autoform-slingshot.coffee'
   ], 'client');
 
@@ -40,4 +42,6 @@ Package.onUse(function(api) {
     "i18n/en.i18n.json",
     "i18n/sv.i18n.json"
   ], ["client", "server"]);
-});
+
+  api.export('SwapTemp');
+}

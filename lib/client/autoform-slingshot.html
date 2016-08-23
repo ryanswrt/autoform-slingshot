@@ -1,5 +1,5 @@
 <template name="afSlingshot">
-  <div class="form-group file-upload" data-schema-key="{{schemaKey}}">
+  <div class="form-group file-upload" data-schema-key="{{schemaKey}}" data-id="{{templateInstanceId}}">
     {{#if fileUpload}}
     {{#with fileUpload}}
     {{> Template.dynamic template=template data=data}}
@@ -7,46 +7,83 @@
     <br/>
     <a class="file-upload-clear" file-input="{{name}}"><i class="fa fa-times"></i> {{removeLabel}}</a>
     {{else}}
-    <label for="file-{{name}}" class="btn btn-default">
+    <label for="file-{{name}}-{{templateInstanceId}}">
       {{label}}
-      <input class="hidden" id="file-{{name}}" file-input="{{name}}" type="file" accept="{{accept}}" />
+      <input class="hidden" id="file-{{name}}-{{templateInstanceId}}" file-input="{{name}}" type="file" accept="{{accept}}" />
+    </label>
+    {{/if}}
+  </div>
+</template>
+
+<template name="afSlingshot_bootstrap3">
+  <div class="form-group file-upload" data-schema-key="{{schemaKey}}" data-id="{{templateInstanceId}}">
+    {{#if fileUpload}}
+    {{#with fileUpload}}
+    {{> Template.dynamic template=template data=data}}
+    {{/with}}
+    <br/>
+    <a class="btn btn-default file-upload-clear" file-input="{{name}}"><i class="fa fa-times"></i> {{removeLabel}}</a>
+    {{else}}
+    <label for="file-{{name}}-{{templateInstanceId}}" class="btn btn-default">
+      {{label}}
+      <input class="hidden" id="file-{{name}}-{{templateInstanceId}}" file-input="{{name}}" type="file" accept="{{accept}}" />
     </label>
     {{/if}}
   </div>
 </template>
 
 <template name="afSlingshot_ionic">
-  <div class="form-group file-upload" data-schema-key="{{schemaKey}}">
+  {{#if skipGroupLabel}}
+  <div class="padding item file-upload" data-schema-key="{{schemaKey}}" data-id="{{templateInstanceId}}">
     {{#if fileUpload}}
     {{#with fileUpload}}
     {{> Template.dynamic template=template data=data}}
     {{/with}}
-    <!-- <a class="button button-block button-dark file-upload-clear" file-input="{{name}}"><i class="fa fa-times"></i> {{removeLabel}}</a> -->
     {{else}}
-    <label for="file-{{name}}" class="button button-block button-calm">
-      {{> ionIcon icon="plus-empty" class="positive"}} {{afFieldLabelText name=this.name}}
-      <input class="hidden" id="file-{{name}}" file-input="{{name}}" type="file" accept="{{accept}}" />
-    </label>
+      <label for="file-{{name}}-{{templateInstanceId}}" class="button button-block">
+        {{#with afFieldLabelText name=this.name}}{{label}}{{/with}}
+        <input class="hidden" id="file-{{name}}-{{templateInstanceId}}" file-input="{{name}}" type="file" accept="{{accept}}" />
+      </label>
+    {{/if}}
+    </div>
+  {{else}}
+  <div class="file-upload" data-schema-key="{{schemaKey}}" data-id="{{templateInstanceId}}">
+    {{#if fileUpload}}
+    {{#with fileUpload}}
+    {{> Template.dynamic template=template data=data}}
+    {{/with}}
+    {{else}}
+      <label for="file-{{name}}-{{templateInstanceId}}" class="button button-small">
+        {{#with afFieldLabelText name=this.name}}{{label}}{{/with}}
+        <input class="hidden" id="file-{{name}}-{{templateInstanceId}}" file-input="{{name}}" type="file" accept="{{accept}}" />
+      </label>
     {{/if}}
   </div>
+  {{/if}}
 </template>
 
 <template name="fileThumbIcon">
-  <a class="btn btn-default" target="_blank" href="{{src}}">
+  <a target="_blank" href="{{src}}">
     <i class="fa fa-{{icon}}"></i> {{filename}}
   </a>
 </template>
 
+<template name="fileThumbIcon_bootstrap3">
+  <span class="btn btn-default" title="{{src}}">
+    <i class="fa fa-{{icon}}"></i> {{filename}}
+  </span>
+</template>
+
 <template name="fileThumbIcon_ionic">
-  <a class="button button-block" target="_blank" href="{{src}}">
+  <span class="button button-small" title="{{src}}" data-action="showActionSheet">
     {{> ionIcon icon=icon}} {{filename}}
-  </a>
+  </span>
 </template>
 
 <template name="fileThumbImg">
-  <img src="{{src}}" alt="" class="img-fileUpload-thumbnail img-thumbnail img-rounded">
+  <img src="{{swapTemp src}}" alt="" class="img-fileUpload-thumbnail img-thumbnail img-rounded">
 </template>
 
 <template name="fileThumbImg_ionic">
-  <img src="{{src}}" alt="" class="img-fileUpload-thumbnail img-thumbnail img-rounded" data-action="showActionSheet">
+  <img src="{{swapTemp src}}" alt="" class="img-fileUpload-thumbnail img-thumbnail img-rounded" data-action="showActionSheet">
 </template>
